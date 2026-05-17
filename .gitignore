@@ -1,0 +1,35 @@
+# 编译生成的二进制文件
+*.bin
+*.o
+*.obj
+*.elf
+
+# 镜像文件
+*.img
+*.iso
+*.vmdk
+*.vdi
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE 配置（可选，如果需要共享配置则注释掉）
+# .trae/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# GDB 调试文件
+.gdb_history
+
+# QEMU 相关
+*.qcow2
+*.raw
