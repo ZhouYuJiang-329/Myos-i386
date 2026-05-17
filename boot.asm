@@ -4,6 +4,9 @@
 [BITS 16]
 global _start
 _start:
+    ; 清除屏幕
+    mov  ax,3
+    int 0x10
     ; 设置段寄存器
     xor ax, ax
     mov ds, ax
