@@ -25,22 +25,12 @@ debug: $(HD_IMG)
 	$(QEMU) -hda $(HD_IMG) -s -S
 
 # 运行 (使用 Bochs + 硬盘镜像)
-bochs: $(HD_IMG) bochsrc
+bochs: $(HD_IMG)
 	$(BOCHS) -f bochsrc -q
 
 # 调试模式运行 (Bochs + 硬盘镜像)
-bochs-debug: $(HD_IMG) bochsrc
+bochs-debug: $(HD_IMG)
 	$(BOCHS) -f bochsrc
-
-# 生成 Bochs 配置文件 (硬盘启动)
-bochsrc:
-	@echo "megs: 32" > $@
-	@echo "ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14" >> $@
-	@echo "ata0-master: type=disk, path=$(HD_IMG), mode=flat" >> $@
-	@echo "boot: disk" >> $@
-	@echo "log: bochs.log" >> $@
-	@echo "mouse: enabled=0" >> $@
-	@echo "display_library: x, options=gui_debug" >> $@
 
 # 使用 bximage 生成硬盘镜像 (16 扇区 = 8KB)
 $(HD_IMG): $(TARGET)
@@ -53,6 +43,6 @@ hd: $(HD_IMG)
 
 # 清理生成的文件
 clean:
-	rm -f $(TARGET) $(HD_IMG) bochsrc bochs.log
+	rm -f $(TARGET) $(HD_IMG) bochs.log
 
 .PHONY: all run debug bochs bochs-debug hd clean
