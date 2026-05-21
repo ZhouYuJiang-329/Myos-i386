@@ -6,7 +6,7 @@ BXIMAGE = bximage
 
 # 目标文件
 TARGET = boot.bin
-SRC = boot.asm
+SRC = oskernel/boot/boot.asm
 HD_IMG = hd.img
 
 # 默认目标
