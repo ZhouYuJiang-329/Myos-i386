@@ -927,3 +927,42 @@ git push --force-with-lease origin main
 - 提交错了（本地） → `reset`
 - 推送错了（远程） → `revert`
 - 想改最后一次 → `amend`
+
+
+Git commit message 通常使用 **Conventional Commits** 规范，格式如下：
+
+
+## 常用 Type
+
+| Type | 含义 | 使用场景 |
+|------|------|---------|
+| `feat` | 新功能 | 新增功能、特性 |
+| `fix` | 修复 | 修复 bug |
+| `docs` | 文档 | 修改文档、注释 |
+| `style` | 格式 | 代码格式调整（空格、缩进等，不影响功能）|
+| `refactor` | 重构 | 代码重构，既不修复 bug 也不添加功能 |
+| `perf` | 性能 | 性能优化 |
+| `test` | 测试 | 添加或修改测试 |
+| `chore` | 杂项 | 构建过程、辅助工具变动 |
+| `build` | 构建 | 影响构建系统或外部依赖 |
+| `ci` | CI | 持续集成配置修改 |
+
+## 示例
+
+```bash
+# 修复 bug
+git commit -m "fix: 修复 read_hard_disk 函数缺少 ret 指令"
+
+# 新增功能
+git commit -m "feat: 添加 setup.asm 引导加载"
+
+# 修改文档
+git commit -m "docs: 添加栈与函数调用文档"
+
+# 重构
+git commit -m "refactor: 优化 Makefile 使用通配符规则"
+
+# 修改构建
+git commit -m "build: 修改硬盘镜像生成方式，支持多扇区写入"
+```
+
