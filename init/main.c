@@ -9,7 +9,7 @@ void kernel_main(void) {
 
       while (msg[i] != '\0') {
           video[i * 2] = msg[i];      // 字符
-          video[i * 2 + 1] = 0x07;    // 属性（白字黑底）
+          video[i * 2 + 1] = 0x0A;    // 属性（白字黑底）
           i++;
       }
 
