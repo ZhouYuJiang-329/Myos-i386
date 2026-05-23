@@ -1,9 +1,13 @@
 [ORG 0x500]
 
+
+[SECTION .data]
+KERNEL_ADDR equ 0x1200
+
 [Section .text]
 [BITS 16]
-global _start
-_start:
+global setup_start
+setup_start:
     mov     ax, 0
     mov     ss, ax
     mov     ds, ax
@@ -14,6 +18,10 @@ _start:
 
     mov     si, msg
     call    print
+    ; ========== 在这里读取内核（实模式）==========
+    mov     edi, KERNEL_ADDR
+    call    read_hard_disk      ; 在实模式下读取硬盘
+
 
     ; ============================================
     ; Step 2: 禁用中断
@@ -189,7 +197,6 @@ enable_a20:
 ; 必须使用 [BITS 32] 指示汇编器生成 32 位代码
 
 [BITS 32]
-
 protected_mode_start:
     ; 4.4 初始化保护模式下的段寄存器
     ; 远跳转已经设置了 CS（代码段寄存器）
@@ -206,15 +213,89 @@ protected_mode_start:
     ; 这里选择 0x90000 作为栈顶（假设该内存区域可用）
     mov     esp, 0x90000
 
-    ; 4.6 验证保护模式已成功进入
-    ; 在显存地址 0xB8000 处显示 "PM"（Protected Mode）
-    ; VGA 文本模式显存：0xB8000 - 0xBFFFF
-    ; 每个字符占 2 字节：ASCII 码 + 属性
-    mov     byte [0xB8000], 'P'     ; 字符 'P'
-    mov     byte [0xB8001], 0x0F    ; 属性：白色文字，黑色背景
-    mov     byte [0xB8002], 'M'     ; 字符 'M'
-    mov     byte [0xB8003], 0x0F    ; 属性：白色文字，黑色背景
+    ; 将内核读入内存
+    mov edi, KERNEL_ADDR
+  
+    jmp CODE_SEG:KERNEL_ADDR
+    jmp $
 
-    ; 进入无限循环，表示成功进入保护模式
-    ; 实际操作系统这里会继续初始化其他组件
-    jmp     $
+; ============================================
+; 硬盘读取函数（16位实模式）
+; ============================================
+; 必须在 [BITS 16] 下执行！
+
+[BITS 16]
+
+read_hard_disk:
+     ; 读硬盘第2扇区到 0x500
+    mov ecx, 3  ; 从硬盘哪个扇区开始读
+    mov bl, 60   ; 读取的扇区数量
+
+    ; 0x1f2 8bit 指定读取或写入的扇区数
+    mov dx, 0x1f2
+    mov al, bl
+    out dx, al
+
+    ; 0x1f3 8bit iba地址的第八位 0-7
+    inc dx
+    mov al, cl
+    out dx, al
+
+    ; 0x1f4 8bit iba地址的中八位 8-15
+    inc dx
+    mov al, ch      ; 取中8位
+    out dx, al
+
+    ; 0x1f5 8bit iba地址的高八位 16-23
+    inc dx
+    shr ecx, 16
+    mov al, cl
+    out dx, al
+
+    ; 0x1f6 8bit
+    ; 0-3 位iba地址的24-27
+    ; 4 0表示主盘 1表示从盘
+    ; 5、7位固定为1
+    ; 6 0表示CHS模式，1表示LAB模式
+    inc dx
+    mov al, ch
+    and al, 0b1110_1111
+    out dx, al
+
+    ; 0x1f7 8bit  命令或状态端口
+    inc dx
+    mov al, 0x20
+    out dx, al
+
+      ; 保存要读取的扇区数到 dh（外层循环计数器）
+    mov     dh, bl              ; dh = 要读取的扇区数
+
+.read_sectors_loop:
+    ; 验证状态
+    ; 3 0表示硬盘未准备好与主机交换数据 1表示准备好了
+    ; 7 0表示硬盘不忙 1表示硬盘忙
+    ; 0 0表示前一条指令正常执行 1表示执行出错 出错信息通过0x1f1端口获得
+.read_check:
+    mov     dx, 0x1f7
+    in      al, dx
+    and     al, 0b10001000      ; 取硬盘状态的第3、7位
+    cmp     al, 0b00001000      ; 硬盘数据准备好了且不忙了
+    jnz     .read_check
+
+    ; 读一个扇区的数据（256 个字 = 512 字节）
+    mov     dx, 0x1f0
+    mov     cx, 256             ; 每个扇区 256 个字
+.read_data:
+    in      ax, dx
+    mov     [edi], ax
+    add     edi, 2
+    loop    .read_data
+
+    ; 扇区计数减 1
+    dec     dh
+    jnz     .read_sectors_loop  ; 如果还有扇区要读，继续
+
+    ret
+
+
+ 

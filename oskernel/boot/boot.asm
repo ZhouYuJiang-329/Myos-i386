@@ -5,8 +5,8 @@ BOOT_MAIN_ADDR EQU 0x500
 
 [SECTION .text]
 [BITS 16]
-global _start
-_start:
+global boot_start
+boot_start:
     ; 清除屏幕
     mov  ax,3
     int 0x10
