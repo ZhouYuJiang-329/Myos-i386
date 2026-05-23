@@ -256,10 +256,9 @@ read_hard_disk:
     ; 0-3 位iba地址的24-27
     ; 4 0表示主盘 1表示从盘
     ; 5、7位固定为1
-    ; 6 0表示CHS模式，1表示LAB模式
+    ; 6 0表示CHS模式，1表示LBA模式
     inc dx
-    mov al, ch
-    and al, 0b1110_1111
+    mov al, 0xE0        ; LBA 模式，主盘
     out dx, al
 
     ; 0x1f7 8bit  命令或状态端口
