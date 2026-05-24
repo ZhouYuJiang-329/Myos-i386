@@ -4,6 +4,7 @@ GCC = gcc
 LD = ld
 QEMU = qemu-system-x86_64
 BOCHS = bochs
+BXIMAGE = bximage
 
 # 目录
 BOOT_DIR = oskernel/boot
@@ -78,7 +79,7 @@ bochs-debug: $(HD_IMG)
 # ============================================
 $(HD_IMG): $(BOOT_BIN) $(SETUP_BIN) $(KERNEL_BIN)
 	@echo "Creating hard disk image..."
-	dd if=/dev/zero of=$@ bs=512 count=2880
+	$(BXIMAGE) -q -hd=32 -func=create -sectsize=512 -imgmode=flat $@
 	dd if=$(BOOT_BIN) of=$@ bs=512 seek=0 count=1 conv=notrunc
 	dd if=$(SETUP_BIN) of=$@ bs=512 seek=1 count=2 conv=notrunc
 	dd if=$(KERNEL_BIN) of=$@ bs=512 seek=3 count=60 conv=notrunc
