@@ -59,7 +59,7 @@ $(KERNEL_BIN): $(HEAD_O) $(MAIN_O)
 # 运行
 # ============================================
 run: $(HD_IMG)
-	$(QEMU) -hda $(HD_IMG)
+	$(QEMU) -hda $(HD_IMG)  -m 512
 
 debug: $(HD_IMG)
 	$(QEMU) -hda $(HD_IMG) -s -S
