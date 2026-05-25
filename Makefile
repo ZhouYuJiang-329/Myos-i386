@@ -8,8 +8,9 @@ BXIMAGE = bximage
 
 # 目录
 BOOT_DIR = oskernel/boot
-INIT_DIR = init
+INIT_DIR = oskernel/init
 KERNEL_DIR = oskernel
+DRIVERS_DIR = oskernel/kernel/drivers
 
 # 源文件
 ASM_SRCS = $(wildcard $(BOOT_DIR)/*.asm)
@@ -20,6 +21,7 @@ BOOT_BIN = $(BOOT_DIR)/boot.bin
 SETUP_BIN = $(BOOT_DIR)/setup.bin
 HEAD_O = $(BOOT_DIR)/head.o
 MAIN_O = $(INIT_DIR)/main.o
+SERIAL_O = $(DRIVERS_DIR)/serial.o
 KERNEL_BIN = $(KERNEL_DIR)/kernel.bin
 
 # 硬盘镜像
@@ -47,19 +49,23 @@ $(HEAD_O): $(BOOT_DIR)/head.asm
 
 # main.c 编译为对象文件（32 位，无标准库，无栈保护）
 $(MAIN_O): $(INIT_DIR)/main.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -c $< -o $@
+	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+
+# serial.c 编译为对象文件
+$(SERIAL_O): $(DRIVERS_DIR)/serial.c
+	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
 
 # ============================================
 # 内核链接
 # ============================================
-$(KERNEL_BIN): $(HEAD_O) $(MAIN_O)
+$(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O)
 	$(LD) -m elf_i386 -Ttext 0x1200 --oformat binary -o $@ $^
 
 # ============================================
 # 运行
 # ============================================
 run: $(HD_IMG)
-	$(QEMU) -hda $(HD_IMG)  -m 512
+	$(QEMU) -hda $(HD_IMG) -m 512 -serial stdio
 
 debug: $(HD_IMG)
 	$(QEMU) -hda $(HD_IMG) -s -S
@@ -89,6 +95,6 @@ hd: $(HD_IMG)
 
 # 清理生成的文件
 clean:
-	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
+	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
 
 .PHONY: all run debug bochs bochs-debug hd clean
