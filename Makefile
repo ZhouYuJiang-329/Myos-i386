@@ -11,6 +11,7 @@ BOOT_DIR = oskernel/boot
 INIT_DIR = oskernel/init
 KERNEL_DIR = oskernel
 DRIVERS_DIR = oskernel/kernel/drivers
+MM_DIR = oskernel/kernel/mm
 
 # 源文件
 ASM_SRCS = $(wildcard $(BOOT_DIR)/*.asm)
@@ -22,6 +23,7 @@ SETUP_BIN = $(BOOT_DIR)/setup.bin
 HEAD_O = $(BOOT_DIR)/head.o
 MAIN_O = $(INIT_DIR)/main.o
 SERIAL_O = $(DRIVERS_DIR)/serial.o
+MEM_DETECT_O = $(MM_DIR)/mem_detect.o
 KERNEL_BIN = $(KERNEL_DIR)/kernel.bin
 
 # 硬盘镜像
@@ -55,10 +57,14 @@ $(MAIN_O): $(INIT_DIR)/main.c
 $(SERIAL_O): $(DRIVERS_DIR)/serial.c
 	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
 
+# mem_detect.c 编译为对象文件
+$(MEM_DETECT_O): $(MM_DIR)/mem_detect.c
+	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+
 # ============================================
 # 内核链接
 # ============================================
-$(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O)
+$(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(MEM_DETECT_O)
 	$(LD) -m elf_i386 -Ttext 0x1200 --oformat binary -o $@ $^
 
 # ============================================
@@ -95,6 +101,6 @@ hd: $(HD_IMG)
 
 # 清理生成的文件
 clean:
-	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
+	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(MEM_DETECT_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
 
 .PHONY: all run debug bochs bochs-debug hd clean

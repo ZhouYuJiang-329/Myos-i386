@@ -53,58 +53,75 @@ void serial_putline(const char* str) {
 }
 
 // 将整数转换为字符串 (辅助函数)
-static void itoa(int value, char* str, int base) {
+static void itoa(unsigned int value, char* str, int base, int width, char pad) {
     char* ptr = str;
     char* ptr1 = str;
     char tmp_char;
-    int tmp_value;
-    
-    // 处理负数 (仅十进制)
-    if (value < 0 && base == 10) {
-        *ptr++ = '-';
-    }
-    
-    ptr1 = ptr;
-    
+    unsigned int tmp_value;
+
     do {
         tmp_value = value;
         value /= base;
         *ptr++ = "0123456789abcdef"[tmp_value - value * base];
     } while (value);
-    
+
+    // 填充前导字符
+    int len = ptr - str;
+    while (len < width) {
+        *ptr++ = pad;
+        len++;
+    }
+
     *ptr-- = '\0';
-    
-    // 反转字符串
-    while (ptr1 < ptr) {
+
+    // 反转字符串（不含填充）
+    char* num_start = str;
+    while (num_start < ptr) {
         tmp_char = *ptr;
-        *ptr-- = *ptr1;
-        *ptr1++ = tmp_char;
+        *ptr-- = *num_start;
+        *num_start++ = tmp_char;
     }
 }
 
 // 格式化输出 (简化版 printf)
-// 支持: %s(字符串), %d(十进制整数), %x(十六进制), %c(字符)
+// 支持: %s(字符串), %d(十进制整数), %x(十六进制), %c(字符), %0Nx(定宽十六进制)
 void serial_printf(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    
+
     char buffer[32];
-    
+
     while (*fmt) {
         if (*fmt == '%' && *(fmt + 1)) {
             fmt++;
+            // 解析宽度
+            int width = 0;
+            char pad = ' ';
+            if (*fmt == '0') {
+                pad = '0';
+                fmt++;
+            }
+            while (*fmt >= '0' && *fmt <= '9') {
+                width = width * 10 + (*fmt - '0');
+                fmt++;
+            }
             switch (*fmt) {
                 case 's':
                     serial_puts(va_arg(args, char*));
                     break;
                 case 'd':
-                    itoa(va_arg(args, int), buffer, 10);
+                    itoa(va_arg(args, int), buffer, 10, width, pad);
                     serial_puts(buffer);
                     break;
                 case 'x':
-                    serial_puts("0x");
-                    itoa(va_arg(args, int), buffer, 16);
-                    serial_puts(buffer);
+                    if (width > 0) {
+                        itoa(va_arg(args, int), buffer, 16, width, pad);
+                        serial_puts(buffer);
+                    } else {
+                        serial_puts("0x");
+                        itoa(va_arg(args, int), buffer, 16, 0, ' ');
+                        serial_puts(buffer);
+                    }
                     break;
                 case 'c':
                     serial_putc((char)va_arg(args, int));
@@ -122,6 +139,6 @@ void serial_printf(const char* fmt, ...) {
         }
         fmt++;
     }
-    
+
     va_end(args);
 }

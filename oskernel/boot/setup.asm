@@ -3,6 +3,7 @@
 
 [SECTION .data]
 KERNEL_ADDR equ 0x1200
+MEMORY_MAP_ADDR equ 0x1100   ; 内存映射表存放地址（16位地址，避免符号扩展问题）
 
 [Section .text]
 [BITS 16]
@@ -18,6 +19,10 @@ setup_start:
 
     mov     si, msg
     call    print
+    
+    ; ========== Step 1: 检测物理内存 ==========
+    call    detect_memory_e820
+
     ; ========== 在这里读取内核（实模式）==========
     mov     edi, KERNEL_ADDR
 
@@ -90,6 +95,125 @@ print:
 
 msg:
     db "hello setup!", 10, 13, 0
+
+; ============================================
+; Step 0: 物理内存检测 (E820)
+; ============================================
+; 使用 INT 0x15, AX=0xE820 获取内存映射
+; 输入: eax=0xE820, edx='SMAP', ecx=20, es:di=缓冲区
+; 输出: 内存映射表写入 es:di
+
+detect_memory_e820:
+    mov     ax, 0
+    mov     es, ax              ; es = 0
+    mov     di, MEMORY_MAP_ADDR + 4  ; di = 缓冲区+4 (跳过count字段)
+    xor     ebx, ebx            ; ebx = 0 (第一次调用)
+    xor     bp, bp              ; bp = 条目计数
+
+.e820_loop:
+    mov     edx, 0x534D4150     ; 'SMAP' 签名
+    mov     eax, 0xE820         ; 功能号
+    mov     ecx, 20             ; ARDS 结构大小 20 字节
+    int     0x15                ; 调用BIOS
+    jc      .e820_failed        ; 如果CF=1，调用失败
+
+    cmp     eax, 0x534D4150     ; 检查返回签名
+    jne     .e820_failed
+
+    ; BIOS 已经把数据写入 es:di
+    ; 移动 di 到下一个条目位置
+    add     di, cx
+    inc     bp                  ; 条目数+1
+
+    cmp     ebx, 0              ; 检查是否还有更多条目
+    jne     .e820_loop          ; ebx!=0 继续循环
+
+.e820_done:
+    ; 保存条目数到内存映射表头部
+    ; 注意：不能用 [0x8000] 直接寻址，16位模式下会被符号扩展为 0xFFFF8000
+    ; 必须用寄存器间接寻址
+    mov     ax, 0
+    mov     es, ax
+    mov     bx, MEMORY_MAP_ADDR
+    movzx   eax, bp             ; 将16位bp扩展为32位eax
+    mov     [bx], eax           ; 保存条目数量(32位)
+
+    mov     si, msg_e820_ok
+    call    print
+    ret
+    
+.e820_failed:
+    mov     si, msg_e820_fail
+    call    print
+
+    ; 如果E820失败，使用 INT 0x15 AH=0x88 获取扩展内存
+    call    detect_memory_88
+
+    ret
+
+msg_e820_ok:
+    db "E820: Memory map detected", 10, 13, 0
+
+msg_e820_fail:
+    db "E820: Failed, using fallback", 10, 13, 0
+
+; ============================================
+; 备选内存检测: INT 0x15 AH=0x88
+; 返回: AX = 从1MB开始的扩展内存大小(KB)
+; ============================================
+detect_memory_88:
+    ; 创建一个简单的内存映射表
+    ; 注意：16位模式下不能用 [0x1100+offset] 直接寻址（超过 0x7FFF 会被符号扩展）
+    ; 必须用寄存器间接寻址 [bx+offset]
+    mov     ax, 0
+    mov     es, ax
+    mov     bx, MEMORY_MAP_ADDR  ; bx = 0x1100
+
+    ; 条目1: 0-640KB (常规内存)
+    mov     dword [bx + 4], 0           ; base low
+    mov     dword [bx + 8], 0           ; base high
+    mov     dword [bx + 12], 0xA0000    ; length low (640KB)
+    mov     dword [bx + 16], 0          ; length high
+    mov     dword [bx + 20], 1          ; type = usable
+    mov     dword [bx + 24], 0          ; acpi
+
+    ; 调用 0x88 获取扩展内存
+    mov     ah, 0x88
+    int     0x15
+    jc      .use_default
+
+    ; 条目2: 1MB - 1MB+AX (扩展内存)
+    movzx   eax, ax             ; AX = KB above 1MB
+    shl     eax, 10             ; 转换为字节
+
+    mov     dword [bx + 28], 0x100000   ; base low (1MB)
+    mov     dword [bx + 32], 0          ; base high
+    mov     [bx + 36], eax              ; length low
+    mov     dword [bx + 40], 0          ; length high
+    mov     dword [bx + 44], 1          ; type = usable
+    mov     dword [bx + 48], 0          ; acpi
+
+    mov     dword [bx], 2               ; 2 entries (32位)
+    jmp     .done
+
+.use_default:
+    ; 使用默认值 32MB
+    mov     dword [bx + 28], 0x100000   ; base low (1MB)
+    mov     dword [bx + 32], 0          ; base high
+    mov     dword [bx + 36], 0x1F00000  ; length low (31MB)
+    mov     dword [bx + 40], 0          ; length high
+    mov     dword [bx + 44], 1          ; type = usable
+    mov     dword [bx + 48], 0          ; acpi
+
+    mov     dword [bx], 2               ; 2 entries (32位)
+
+.done:
+    mov     si, msg_88_ok
+    call    print
+    ret
+
+msg_88_ok:
+    db "Memory: Using 0x88 fallback", 10, 13, 0
 
 ; ============================================
 ; Step 1: GDT（全局描述符表）定义
@@ -215,13 +339,12 @@ protected_mode_start:
     ; 这里选择 0x90000 作为栈顶（假设该内存区域可用）
     mov     esp, 0x90000
 
-    mov ecx, 3
-    mov bl, 60
-    call read_hd
+    ; 将内核读入内存（从扇区 3 开始，读 60 个扇区到 0x1200）
+    mov     edi, KERNEL_ADDR
+    mov     ecx, 3          ; LBA 起始扇区
+    mov     bl, 60          ; 扇区数量
+    call    read_hd
 
-    ; 将内核读入内存
-    mov edi, KERNEL_ADDR
-  
     jmp CODE_SEG:KERNEL_ADDR
     jmp $
 
@@ -235,27 +358,27 @@ read_hd:
     mov al, bl
     out dx, al
 
-    ; 0x1f3 8bit iba地址的第八位 0-7
+    ; 0x1f3 8bit LBA地址的低八位 0-7
     inc dx
     mov al, cl
     out dx, al
 
-    ; 0x1f4 8bit iba地址的中八位 8-15
+    ; 0x1f4 8bit LBA地址的中八位 8-15
     inc dx
     mov al, ch
     out dx, al
 
-    ; 0x1f5 8bit iba地址的高八位 16-23
+    ; 0x1f5 8bit LBA地址的高八位 16-23
     inc dx
     shr ecx, 16
     mov al, cl
     out dx, al
 
     ; 0x1f6 8bit
-    ; 0-3 位iba地址的24-27
+    ; 0-3 位 LBA地址的24-27
     ; 4 0表示主盘 1表示从盘
     ; 5、7位固定为1
-    ; 6 0表示CHS模式，1表示LAB模式
+    ; 6 0表示CHS模式，1表示LBA模式
     inc dx
     shr ecx, 8
     and cl, 0b1111
@@ -263,20 +386,20 @@ read_hd:
     or al, cl
     out dx, al
 
-    ; 0x1f7 8bit  命令或状态端口
+    ; 0x1f7 8bit 命令或状态端口
     inc dx
     mov al, 0x20
     out dx, al
 
-    ; 设置loop次数，读多少个扇区要loop多少次
-    mov cl, bl
+    ; LBA 端口写入完成，ecx 不再需要，切换为循环计数器
+    movzx ecx, bl          ; ecx = 扇区数量（零扩展，避免污染高位）
 .start_read:
-    push cx     ; 保存loop次数，防止被下面的代码修改破坏
+    push cx                ; 保存loop次数
 
     call .wait_hd_prepare
     call read_hd_data
 
-    pop cx      ; 恢复loop次数
+    pop cx                 ; 恢复loop次数
 
     loop .start_read
 

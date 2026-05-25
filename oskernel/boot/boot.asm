@@ -29,27 +29,27 @@ read_hd:
     mov al, bl
     out dx, al
 
-    ; 0x1f3 8bit iba地址的第八位 0-7
+    ; 0x1f3 8bit LBA地址的低八位 0-7
     inc dx
     mov al, cl
     out dx, al
 
-    ; 0x1f4 8bit iba地址的中八位 8-15
+    ; 0x1f4 8bit LBA地址的中八位 8-15
     inc dx
     mov al, ch
     out dx, al
 
-    ; 0x1f5 8bit iba地址的高八位 16-23
+    ; 0x1f5 8bit LBA地址的高八位 16-23
     inc dx
     shr ecx, 16
     mov al, cl
     out dx, al
 
     ; 0x1f6 8bit
-    ; 0-3 位iba地址的24-27
+    ; 0-3 位 LBA地址的24-27
     ; 4 0表示主盘 1表示从盘
     ; 5、7位固定为1
-    ; 6 0表示CHS模式，1表示LAB模式
+    ; 6 0表示CHS模式，1表示LBA模式
     inc dx
     shr ecx, 8
     and cl, 0b1111
@@ -57,20 +57,20 @@ read_hd:
     or al, cl
     out dx, al
 
-    ; 0x1f7 8bit  命令或状态端口
+    ; 0x1f7 8bit 命令或状态端口
     inc dx
     mov al, 0x20
     out dx, al
 
-    ; 设置loop次数，读多少个扇区要loop多少次
-    mov cl, bl
+    ; LBA 端口写入完成，ecx 不再需要，切换为循环计数器
+    movzx ecx, bl          ; ecx = 扇区数量（零扩展，避免污染高位）
 .start_read:
-    push cx     ; 保存loop次数，防止被下面的代码修改破坏
+    push cx                ; 保存loop次数
 
     call .wait_hd_prepare
     call read_hd_data
 
-    pop cx      ; 恢复loop次数
+    pop cx                 ; 恢复loop次数
 
     loop .start_read
 
