@@ -65,7 +65,7 @@ $(MEM_DETECT_O): $(MM_DIR)/mem_detect.c
 # 内核链接
 # ============================================
 $(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(MEM_DETECT_O)
-	$(LD) -m elf_i386 -Ttext 0x1200  -o $@ $^
+	$(LD) -m elf_i386 -Ttext 0x1200  --oformat binary -o $@ $^
 
 # ============================================
 # 运行
