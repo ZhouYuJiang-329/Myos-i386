@@ -4,6 +4,7 @@
 
 #include "../kernel/drivers/serial.h"
 #include "../kernel/mm/mem_detect.h"
+#include "../kernel/mm/paging.h"
 
 void kernel_main(void) {
     // 初始化串口
@@ -44,7 +45,18 @@ void kernel_main(void) {
     serial_printf("Free pages: %d\n", pmm_get_free_pages());
     
     serial_putline("============================================\n");
-    
+
+    // 验证分页（读取CR0）
+    uint32_t cr0;
+    __asm__ __volatile__("mov %%cr0, %0" : "=r"(cr0));
+    serial_printf("CR0: 0x%x\n", cr0);
+
+    if (cr0 & 0x80000000) {
+        serial_puts("Paging enabled successfully!\n");
+    } else {
+        serial_puts("ERROR: Paging not enabled!\n");
+    }
+
     // 保留VGA输出作为备用显示
     char* video = (char*)0xb8000;
     char* msg = "Hello OS! Memory OK!";
