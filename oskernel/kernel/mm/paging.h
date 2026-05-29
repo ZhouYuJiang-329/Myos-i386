@@ -11,8 +11,8 @@
 #define PAGE_TABLE_ENTRIES 1024
 
 // 固定物理地址（选择不与PMM位图冲突的位置）
-#define PAGE_DIR_PHYS 0x50000    // 页目录物理地址（4KB对齐）
-#define PAGE_TABLE0_PHYS 0x51000 // 页表0物理地址（4KB对齐）
+#define PAGE_DIR_PHYS 0x30000    // 页目录物理地址（4KB对齐）
+#define PAGE_TABLE0_PHYS 0x31000 // 页表0物理地址（4KB对齐）
 
 // 页目录项（PDE）
 typedef struct {
