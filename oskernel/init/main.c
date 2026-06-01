@@ -3,12 +3,16 @@
 //
 
 #include "../kernel/drivers/serial.h"
+#include "../kernel/drivers/vga.h"
 #include "../kernel/mm/mem_detect.h"
 #include "../kernel/mm/paging.h"
 
 void kernel_main(void) {
     // 初始化串口
     serial_init();
+
+    // 初始化 VGA 显卡
+    vga_init();
 
     serial_putline("\n========================================");
     serial_putline("  OS Kernel Started!");
@@ -57,16 +61,11 @@ void kernel_main(void) {
         serial_puts("ERROR: Paging not enabled!\n");
     }
 
-    // 保留VGA输出作为备用显示
-    char* video = (char*)0xb8000;
-    char* msg = "Hello OS! Memory OK!";
-    int i = 0;
-
-    while (msg[i] != '\0') {
-        video[i * 2] = msg[i];      // 字符
-        video[i * 2 + 1] = 0x0A;    // 属性（白字黑底）
-        i++;
-    }
+    // 使用 VGA 驱动输出测试信息
+    vga_set_color(VGA_GREEN, VGA_BLACK);
+    vga_puts("Hello OS! VGA OK!\n");
+    vga_set_color(VGA_WHITE, VGA_BLACK);
+    vga_puts("Hello OS! VGA OK!\n");
     
     serial_putline("Kernel initialization completed!");
     
