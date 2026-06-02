@@ -6,6 +6,9 @@
 #include "../kernel/drivers/vga.h"
 #include "../kernel/mm/mem_detect.h"
 #include "../kernel/mm/paging.h"
+#include "../kernel/idt/idt.h"
+#include "../kernel/idt/pic.h"
+#include "../kernel/idt/interrupt.h"
 
 void kernel_main(void) {
     // 初始化串口
@@ -23,6 +26,32 @@ void kernel_main(void) {
     
     // 初始化物理内存管理器
     pmm_init();
+
+    // 初始化中断处理框架
+    serial_putline("\n========== Interrupt Initialization ==========");
+    interrupt_init();
+
+    // 初始化 8259A PIC
+    // 主 PIC 中断向量偏移: 0x20 (ISR 32-39)
+    // 从 PIC 中断向量偏移: 0x28 (ISR 40-47)
+    pic_init(0x20, 0x28);
+
+    // 初始化 IDT
+    idt_init();
+
+    // 启用键盘中断 (IRQ 1)
+    // 键盘中断会映射到 ISR 33
+    pic_set_mask(1, 0);  // 0 = 启用
+
+    // 启用定时器中断 (IRQ 0)
+    // 定时器中断会映射到 ISR 32
+    pic_set_mask(0, 0);  // 0 = 启用
+
+    // 启用所有中断
+    __asm__ __volatile__("sti");
+
+    serial_puts("Interrupts enabled!\n");
+    serial_putline("============================================\n");
     
     // 测试内存分配
     serial_putline("\n========== Memory Allocation Test ==========");

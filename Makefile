@@ -12,6 +12,7 @@ INIT_DIR = oskernel/init
 KERNEL_DIR = oskernel
 DRIVERS_DIR = oskernel/kernel/drivers
 MM_DIR = oskernel/kernel/mm
+IDT_DIR = oskernel/kernel/idt
 
 # 源文件
 ASM_SRCS = $(wildcard $(BOOT_DIR)/*.asm)
@@ -26,6 +27,10 @@ SERIAL_O = $(DRIVERS_DIR)/serial.o
 VGA_O = $(DRIVERS_DIR)/vga.o
 MEM_DETECT_O = $(MM_DIR)/mem_detect.o
 PAGING_O = $(MM_DIR)/paging.o
+IDT_O = $(IDT_DIR)/idt.o
+ISR_O = $(IDT_DIR)/isr.o
+PIC_O = $(IDT_DIR)/pic.o
+INTERRUPT_O = $(IDT_DIR)/interrupt.o
 KERNEL_BIN = $(KERNEL_DIR)/kernel.bin
 
 # 硬盘镜像
@@ -71,10 +76,26 @@ $(MEM_DETECT_O): $(MM_DIR)/mem_detect.c
 $(PAGING_O): $(MM_DIR)/paging.c
 	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
 
+# idt.c 编译为对象文件
+$(IDT_O): $(IDT_DIR)/idt.c
+	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+
+# isr.asm 编译为 ELF 对象文件
+$(ISR_O): $(IDT_DIR)/isr.asm
+	$(NASM) -f elf32 $< -o $@
+
+# pic.c 编译为对象文件
+$(PIC_O): $(IDT_DIR)/pic.c
+	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+
+# interrupt.c 编译为对象文件
+$(INTERRUPT_O): $(IDT_DIR)/interrupt.c
+	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+
 # ============================================
 # 内核链接
 # ============================================
-$(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) $(PAGING_O)
+$(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) $(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(INTERRUPT_O)
 	$(LD) -m elf_i386 -Ttext 0x1200  --oformat binary -o $@ $^
 
 # ============================================
@@ -111,6 +132,6 @@ hd: $(HD_IMG)
 
 # 清理生成的文件
 clean:
-	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) $(PAGING_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
+	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) $(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(INTERRUPT_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
 
 .PHONY: all run debug bochs bochs-debug hd clean
