@@ -142,9 +142,28 @@ void interrupt_handler(struct interrupt_frame* frame, uint32_t interrupt_number)
 
         uint8_t irq = interrupt_number - 32;
 
-        // 打印中断信息
-        serial_printf("[IRQ] %s (IRQ %d, ISR %d)\n",
-                      irq_names[irq], irq, interrupt_number);
+        // 对于键盘中断，需要从数据端口读取扫描码
+        // 否则键盘控制器会一直保持 IRQ 线高电平，无法触发下一次中断
+        if (irq == 1) {
+            // 读取键盘扫描码（端口 0x60）
+            uint8_t scancode = inb(0x60);
+            serial_printf("[IRQ] Keyboard scancode: 0x%x\n", scancode);
+            // 打印键盘中断信息
+            serial_printf("[IRQ] %s (IRQ %d, ISR %d)\n",
+                          irq_names[irq], irq, interrupt_number);
+        } else if (irq == 0) {
+            // 对于定时器中断，只打印简短信息
+            // 这样可以更容易看到其他中断
+            static int timer_count = 0;
+            timer_count++;
+            if (timer_count % 100 == 0) {
+                serial_printf("[IRQ] Timer tick: %d\n", timer_count);
+            }
+        } else {
+            // 其他中断打印完整信息
+            serial_printf("[IRQ] %s (IRQ %d, ISR %d)\n",
+                          irq_names[irq], irq, interrupt_number);
+        }
 
         // 发送 EOI (End of Interrupt) 给 PIC
         // 这是必须的，否则 PIC 不会发送下一个中断
