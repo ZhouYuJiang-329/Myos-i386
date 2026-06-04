@@ -104,7 +104,7 @@ $(INTERRUPT_O): $(IDT_DIR)/interrupt.c
 # 内核链接
 # ============================================
 $(KERNEL_BIN): $(OBJS)
-	$(LD) -m elf_i386 -Ttext 0x1200  --oformat binary -o $@ $^
+	$(LD) -m elf_i386 -Ttext 0x1200  --oformat binary -o $@ $^ -Map $(BUILD_DIR)/kernel.map
 
 # ============================================
 # 运行
