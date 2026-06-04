@@ -13,28 +13,36 @@ KERNEL_DIR = oskernel
 DRIVERS_DIR = oskernel/kernel/drivers
 MM_DIR = oskernel/kernel/mm
 IDT_DIR = oskernel/kernel/idt
+BUILD_DIR = build
+
+# 创建 build 目录（如果不存在）
+$(shell mkdir -p $(BUILD_DIR))
 
 # 源文件
 ASM_SRCS = $(wildcard $(BOOT_DIR)/*.asm)
 C_SRCS = $(wildcard $(INIT_DIR)/*.c)
 
-# 目标文件
-BOOT_BIN = $(BOOT_DIR)/boot.bin
-SETUP_BIN = $(BOOT_DIR)/setup.bin
-HEAD_O = $(BOOT_DIR)/head.o
-MAIN_O = $(INIT_DIR)/main.o
-SERIAL_O = $(DRIVERS_DIR)/serial.o
-VGA_O = $(DRIVERS_DIR)/vga.o
-MEM_DETECT_O = $(MM_DIR)/mem_detect.o
-PAGING_O = $(MM_DIR)/paging.o
-IDT_O = $(IDT_DIR)/idt.o
-ISR_O = $(IDT_DIR)/isr.o
-PIC_O = $(IDT_DIR)/pic.o
-INTERRUPT_O = $(IDT_DIR)/interrupt.o
-KERNEL_BIN = $(KERNEL_DIR)/kernel.bin
+# 目标文件（全部放在 build 目录下）
+BOOT_BIN = $(BUILD_DIR)/boot.bin
+SETUP_BIN = $(BUILD_DIR)/setup.bin
+HEAD_O = $(BUILD_DIR)/head.o
+MAIN_O = $(BUILD_DIR)/main.o
+SERIAL_O = $(BUILD_DIR)/serial.o
+VGA_O = $(BUILD_DIR)/vga.o
+MEM_DETECT_O = $(BUILD_DIR)/mem_detect.o
+PAGING_O = $(BUILD_DIR)/paging.o
+IDT_O = $(BUILD_DIR)/idt.o
+ISR_O = $(BUILD_DIR)/isr.o
+PIC_O = $(BUILD_DIR)/pic.o
+INTERRUPT_O = $(BUILD_DIR)/interrupt.o
+KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 
-# 硬盘镜像
-HD_IMG = hd.img
+# 内核对象文件集合
+OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
+		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(INTERRUPT_O)
+
+# 硬盘镜像（也放在 build 目录下）
+HD_IMG = $(BUILD_DIR)/hd.img
 
 # 默认目标
 all: $(HD_IMG)
@@ -95,7 +103,7 @@ $(INTERRUPT_O): $(IDT_DIR)/interrupt.c
 # ============================================
 # 内核链接
 # ============================================
-$(KERNEL_BIN): $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) $(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(INTERRUPT_O)
+$(KERNEL_BIN): $(OBJS)
 	$(LD) -m elf_i386 -Ttext 0x1200  --oformat binary -o $@ $^
 
 # ============================================
@@ -132,6 +140,6 @@ hd: $(HD_IMG)
 
 # 清理生成的文件
 clean:
-	rm -f $(BOOT_BIN) $(SETUP_BIN) $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) $(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(INTERRUPT_O) $(KERNEL_BIN) $(HD_IMG) bochs.log
+	rm -rf $(BUILD_DIR) bochs.log
 
 .PHONY: all run debug bochs bochs-debug hd clean
