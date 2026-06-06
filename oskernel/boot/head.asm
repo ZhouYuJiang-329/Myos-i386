@@ -62,6 +62,10 @@ _start:
     mov eax, PAGE_TABLE0_PHYS  ; PAGE_TABLE0_PHYS
     or eax, PG_US_U | PG_RW_W | PG_P
     mov [PAGE_DIR_PHYS], eax  ; 页目录项[0]
+    mov [PAGE_DIR_PHYS+0xc00], eax  ; 页目录项[768]  虚拟地址高3gb区域
+
+    sub eax,0x1000       ;自映射
+    mov [PAGE_DIR_PHYS+4092],eax ;页目录项[1023]，映射为自己
 
     ; ============================================
     ; 启用分页
