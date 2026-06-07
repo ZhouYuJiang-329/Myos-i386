@@ -46,12 +46,13 @@ BITMAP_O = $(BUILD_DIR)/bitmap.o
 MEMORY_O = $(BUILD_DIR)/memory.o
 INTERRUPT_O = $(BUILD_DIR)/interrupt.o
 THREAD_O = $(BUILD_DIR)/thread.o
+LIST_O = $(BUILD_DIR)/list.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 
 # 内核对象文件集合
 OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
 		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) \
-		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O)
+		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O) $(LIST_O)
 
 # 硬盘镜像（也放在 build 目录下）
 HD_IMG = $(BUILD_DIR)/hd.img
@@ -128,6 +129,9 @@ $(MEMORY_O): $(MM_DIR)/memory.c
 $(THREAD_O): $(THREAD_DIR)/thread.c
 	$(GCC) $(CFLAGS) -c $< -o $@
 
+# list.c 编译为对象文件
+$(LIST_O): $(LIB_DIR)/kernel/list.c
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 
 # ============================================
