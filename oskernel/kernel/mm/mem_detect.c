@@ -33,8 +33,8 @@ void print_memory_map(void) {
     serial_putline("================================\n");
 }
 
-// 获取总内存大小（MB）
-uint32_t get_total_memory_mb(void) {
+// 获取总可用内存大小（字节）
+uint32_t get_total_memory_bytes(void) {
     uint64_t total = 0;
 
     for (uint32_t i = 0; i < g_memory_map->count; i++) {
@@ -43,5 +43,10 @@ uint32_t get_total_memory_mb(void) {
         }
     }
 
-    return (uint32_t)(total / (1024 * 1024));
+    return (uint32_t)total;
+}
+
+// 获取总内存大小（MB）
+uint32_t get_total_memory_mb(void) {
+    return get_total_memory_bytes() / (1024 * 1024);
 }

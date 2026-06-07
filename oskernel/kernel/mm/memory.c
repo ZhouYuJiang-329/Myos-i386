@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "mem_detect.h"
 #include "stdint.h"
 #include <stddef.h>
 #include "../drivers/serial.h"
@@ -203,7 +204,8 @@ void* get_kernel_pages(uint32_t pg_cnt) {
 /* 内存管理部分初始化入口 */
 void mem_init() {
    serial_putline("mem_init start");
-   uint32_t mem_bytes_total = (*(uint32_t*)(MEMORY_MAP_ADDR));
+   uint32_t mem_bytes_total = get_total_memory_bytes();
+   serial_printf("Total usable memory: %d MB\n", mem_bytes_total / (1024 * 1024));
    mem_pool_init(mem_bytes_total);	  // 初始化内存池
    serial_putline("mem_init done");
 }

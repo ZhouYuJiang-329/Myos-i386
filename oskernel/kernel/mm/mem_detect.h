@@ -31,6 +31,7 @@ typedef struct {
 
 // 函数声明
 void print_memory_map(void);
+uint32_t get_total_memory_bytes(void);
 uint32_t get_total_memory_mb(void);
 
 #endif // MEM_DETECT_H
