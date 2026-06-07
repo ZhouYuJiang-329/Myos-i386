@@ -9,6 +9,7 @@
 #include "../kernel/idt/idt.h"
 #include "../kernel/idt/pic.h"
 #include "../kernel/idt/interrupt.h"
+#include "../kernel/mm/memory.h"
 
 void kernel_main(void) {
     // 初始化串口
@@ -25,7 +26,7 @@ void kernel_main(void) {
     print_memory_map();
     
     // 初始化物理内存管理器
-    pmm_init();
+    mem_init();
 
     // 初始化中断处理框架
     serial_putline("\n========== Interrupt Initialization ==========");
@@ -51,32 +52,6 @@ void kernel_main(void) {
     __asm__ __volatile__("sti");
 
     serial_puts("Interrupts enabled!\n");
-    serial_putline("============================================\n");
-    
-    // 测试内存分配
-    serial_putline("\n========== Memory Allocation Test ==========");
-    
-    void* page1 = pmm_alloc_page();
-    serial_printf("Allocated page 1 at: 0x%x\n", page1);
-    
-    void* page2 = pmm_alloc_page();
-    serial_printf("Allocated page 2 at: 0x%x\n", page2);
-    
-    void* page3 = pmm_alloc_page();
-    serial_printf("Allocated page 3 at: 0x%x\n", page3);
-    
-    serial_printf("Free pages: %d\n", pmm_get_free_pages());
-    
-    // 释放内存
-    pmm_free_page(page2);
-    serial_printf("Freed page 2\n");
-    serial_printf("Free pages after free: %d\n", pmm_get_free_pages());
-    
-    // 再次分配
-    void* page4 = pmm_alloc_page();
-    serial_printf("Allocated page 4 at: 0x%x\n", page4);
-    serial_printf("Free pages: %d\n", pmm_get_free_pages());
-    
     serial_putline("============================================\n");
 
     // 验证分页（读取CR0）

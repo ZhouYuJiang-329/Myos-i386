@@ -42,12 +42,14 @@ ISR_O = $(BUILD_DIR)/isr.o
 PIC_O = $(BUILD_DIR)/pic.o
 STRING_O = $(BUILD_DIR)/string.o
 BITMAP_O = $(BUILD_DIR)/bitmap.o
+MEMORY_O = $(BUILD_DIR)/memory.o
 INTERRUPT_O = $(BUILD_DIR)/interrupt.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 
 # 内核对象文件集合
 OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
-		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) $(BITMAP_O) $(INTERRUPT_O)
+		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) \
+		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O)
 
 # 硬盘镜像（也放在 build 目录下）
 HD_IMG = $(BUILD_DIR)/hd.img
@@ -114,6 +116,10 @@ $(STRING_O): $(LIB_DIR)/string.c
 
 # bitmap.c 编译为对象文件
 $(BITMAP_O): $(LIB_DIR)/bitmap.c
+	$(GCC) $(CFLAGS) -c $< -o $@
+
+# memory.c 编译为对象文件
+$(MEMORY_O): $(MM_DIR)/memory.c
 	$(GCC) $(CFLAGS) -c $< -o $@
 
 # ============================================

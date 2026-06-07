@@ -25,16 +25,6 @@ typedef struct {
     e820_entry_t entries[MAX_E820_ENTRIES];  // 条目数组
 } memory_map_t;
 
-// 物理内存管理器
-typedef struct {
-    uint32_t total_pages;       // 总页数
-    uint32_t free_pages;        // 空闲页数
-    uint32_t used_pages;        // 已用页数
-    uint32_t *bitmap;           // 位图（每个bit代表一页）
-    uint32_t bitmap_size;       // 位图大小（字节）
-    uint32_t start_pfn;         // 起始物理页帧号
-} pmm_t;
-
 // 内存映射表存放在物理地址 0x1100 (由 setup.asm 填充)
 #define MEMORY_MAP_ADDR 0x1100
 #define g_memory_map ((memory_map_t*)MEMORY_MAP_ADDR)
@@ -42,9 +32,5 @@ typedef struct {
 // 函数声明
 void print_memory_map(void);
 uint32_t get_total_memory_mb(void);
-void pmm_init(void);
-void* pmm_alloc_page(void);
-void pmm_free_page(void* page);
-uint32_t pmm_get_free_pages(void);
 
 #endif // MEM_DETECT_H
