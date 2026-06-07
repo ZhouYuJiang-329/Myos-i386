@@ -6,6 +6,9 @@ QEMU = qemu-system-x86_64
 BOCHS = bochs
 BXIMAGE = bximage
 
+# C 编译器标志（32位保护模式，无标准库，无栈保护）
+CFLAGS = -m32 -ffreestanding   -fno-pic -fno-stack-protector -I.
+
 # 目录
 BOOT_DIR = oskernel/boot
 INIT_DIR = oskernel/init
@@ -14,9 +17,12 @@ DRIVERS_DIR = oskernel/kernel/drivers
 MM_DIR = oskernel/kernel/mm
 IDT_DIR = oskernel/kernel/idt
 BUILD_DIR = build
+LIB_DIR = oskernel/kernel/lib
 
 # 创建 build 目录（如果不存在）
 $(shell mkdir -p $(BUILD_DIR))
+
+
 
 # 源文件
 ASM_SRCS = $(wildcard $(BOOT_DIR)/*.asm)
@@ -34,12 +40,14 @@ PAGING_O = $(BUILD_DIR)/paging.o
 IDT_O = $(BUILD_DIR)/idt.o
 ISR_O = $(BUILD_DIR)/isr.o
 PIC_O = $(BUILD_DIR)/pic.o
+STRING_O = $(BUILD_DIR)/string.o
+BITMAP_O = $(BUILD_DIR)/bitmap.o
 INTERRUPT_O = $(BUILD_DIR)/interrupt.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 
 # 内核对象文件集合
 OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
-		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(INTERRUPT_O)
+		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) $(BITMAP_O) $(INTERRUPT_O)
 
 # 硬盘镜像（也放在 build 目录下）
 HD_IMG = $(BUILD_DIR)/hd.img
@@ -66,27 +74,27 @@ $(HEAD_O): $(BOOT_DIR)/head.asm
 
 # main.c 编译为对象文件（32 位，无标准库，无栈保护）
 $(MAIN_O): $(INIT_DIR)/main.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # serial.c 编译为对象文件
 $(SERIAL_O): $(DRIVERS_DIR)/serial.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # vga.c 编译为对象文件
 $(VGA_O): $(DRIVERS_DIR)/vga.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # mem_detect.c 编译为对象文件
 $(MEM_DETECT_O): $(MM_DIR)/mem_detect.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # paging.c 编译为对象文件
 $(PAGING_O): $(MM_DIR)/paging.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # idt.c 编译为对象文件
 $(IDT_O): $(IDT_DIR)/idt.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # isr.asm 编译为 ELF 对象文件
 $(ISR_O): $(IDT_DIR)/isr.asm
@@ -94,11 +102,19 @@ $(ISR_O): $(IDT_DIR)/isr.asm
 
 # pic.c 编译为对象文件
 $(PIC_O): $(IDT_DIR)/pic.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # interrupt.c 编译为对象文件
 $(INTERRUPT_O): $(IDT_DIR)/interrupt.c
-	$(GCC) -m32 -ffreestanding -fno-pic -fno-stack-protector -I. -c $< -o $@
+	$(GCC) $(CFLAGS) -c $< -o $@
+
+# string.c 编译为对象文件
+$(STRING_O): $(LIB_DIR)/string.c
+	$(GCC) $(CFLAGS) -c $< -o $@
+
+# bitmap.c 编译为对象文件
+$(BITMAP_O): $(LIB_DIR)/bitmap.c
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 # ============================================
 # 内核链接
