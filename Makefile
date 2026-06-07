@@ -18,6 +18,7 @@ MM_DIR = oskernel/kernel/mm
 IDT_DIR = oskernel/kernel/idt
 BUILD_DIR = build
 LIB_DIR = oskernel/kernel/lib
+THREAD_DIR = oskernel/kernel/thread
 
 # 创建 build 目录（如果不存在）
 $(shell mkdir -p $(BUILD_DIR))
@@ -44,12 +45,13 @@ STRING_O = $(BUILD_DIR)/string.o
 BITMAP_O = $(BUILD_DIR)/bitmap.o
 MEMORY_O = $(BUILD_DIR)/memory.o
 INTERRUPT_O = $(BUILD_DIR)/interrupt.o
+THREAD_O = $(BUILD_DIR)/thread.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 
 # 内核对象文件集合
 OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
 		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) \
-		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O)
+		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O)
 
 # 硬盘镜像（也放在 build 目录下）
 HD_IMG = $(BUILD_DIR)/hd.img
@@ -121,6 +123,12 @@ $(BITMAP_O): $(LIB_DIR)/bitmap.c
 # memory.c 编译为对象文件
 $(MEMORY_O): $(MM_DIR)/memory.c
 	$(GCC) $(CFLAGS) -c $< -o $@
+
+# thread.c 编译为对象文件
+$(THREAD_O): $(THREAD_DIR)/thread.c
+	$(GCC) $(CFLAGS) -c $< -o $@
+
+
 
 # ============================================
 # 内核链接

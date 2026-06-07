@@ -10,7 +10,9 @@
 #include "../kernel/idt/pic.h"
 #include "../kernel/idt/interrupt.h"
 #include "../kernel/mm/memory.h"
+#include "../kernel/thread/thread.h"
 
+void k_thread_a(void *arg);
 void kernel_main(void) {
     // 初始化串口
     serial_init();
@@ -72,9 +74,19 @@ void kernel_main(void) {
     vga_puts("Hello OS! VGA OK!\n");
     
     serial_putline("Kernel initialization completed!");
-    
+    vga_puts("Kernel initialization completed!\n");
+    thread_start("k_thread_a",31, k_thread_a, "thread_a");
     // 无限循环，防止内核退出
     while (1) {
         __asm__ volatile("hlt");
     }
+}
+
+void k_thread_a(void *arg) {
+    char *message = (char*)arg;
+    while(1){
+       
+        vga_puts(message);
+    }
+    
 }
