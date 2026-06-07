@@ -1,6 +1,6 @@
 #include "bitmap.h"     //不仅是为了通过一致性检查，位图的数据结构struct bitmap也在这里面
-#include "stdint.h"     
-#include "string.h"     //里面包含了内存初始化函数，memset
+#include "stdint.h"
+#include "../string.h"     //里面包含了内存初始化函数，memset
 
 void bitmap_init(struct bitmap* btmp){
     memset(btmp->bits, 0, btmp->btmp_bytes_len);

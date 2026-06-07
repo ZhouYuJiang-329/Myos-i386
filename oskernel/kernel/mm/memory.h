@@ -1,7 +1,7 @@
 #ifndef __KERNEL_MEMORY_H
 #define __KERNEL_MEMORY_H
 #include "stdint.h"
-#include "../lib/bitmap.h"
+#include "../lib/kernel/bitmap.h"
 
 
 #define PG_SIZE 4096    //一页的大小

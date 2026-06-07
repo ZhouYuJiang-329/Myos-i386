@@ -117,7 +117,7 @@ $(STRING_O): $(LIB_DIR)/string.c
 	$(GCC) $(CFLAGS) -c $< -o $@
 
 # bitmap.c 编译为对象文件
-$(BITMAP_O): $(LIB_DIR)/bitmap.c
+$(BITMAP_O): $(LIB_DIR)/kernel/bitmap.c
 	$(GCC) $(CFLAGS) -c $< -o $@
 
 # memory.c 编译为对象文件

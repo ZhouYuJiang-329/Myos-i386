@@ -75,7 +75,7 @@ void kernel_main(void) {
     
     serial_putline("Kernel initialization completed!");
     vga_puts("Kernel initialization completed!\n");
-    thread_start("k_thread_a",31, k_thread_a, "thread_a");
+    thread_start("k_thread_a",31, k_thread_a, "thread_a ");
     // 无限循环，防止内核退出
     while (1) {
         __asm__ volatile("hlt");
