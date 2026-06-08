@@ -96,6 +96,11 @@ void interrupt_handler(struct interrupt_frame* frame, uint32_t interrupt_number)
     if (interrupt_number < 256 && interrupt_handlers[interrupt_number] != NULL) {
         // 调用自定义处理函数
         interrupt_handlers[interrupt_number](frame);
+
+        // 对于硬件中断，需要发送 EOI
+        if (interrupt_number >= 32 && interrupt_number < 48) {
+            pic_send_eoi(interrupt_number - 32);
+        }
         return;
     }
 

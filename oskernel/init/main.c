@@ -11,6 +11,9 @@
 #include "../kernel/idt/interrupt.h"
 #include "../kernel/mm/memory.h"
 #include "../kernel/thread/thread.h"
+#include "../kernel/device/timer.h"
+
+#
 
 void k_thread_a(void *arg);
 void kernel_main(void) {
@@ -49,9 +52,11 @@ void kernel_main(void) {
     // 启用定时器中断 (IRQ 0)
     // 定时器中断会映射到 ISR 32
     pic_set_mask(0, 0);  // 0 = 启用
+   
 
     // 启用所有中断
     __asm__ __volatile__("sti");
+    
 
     serial_puts("Interrupts enabled!\n");
     serial_putline("============================================\n");
@@ -75,8 +80,9 @@ void kernel_main(void) {
     
     serial_putline("Kernel initialization completed!");
     vga_puts("Kernel initialization completed!\n");
-    thread_start("k_thread_a",31, k_thread_a, "thread_a ");
+    // thread_start("k_thread_a",31, k_thread_a, "thread_a ");
     // 无限循环，防止内核退出
+     timer_init();
     while (1) {
         __asm__ volatile("hlt");
     }

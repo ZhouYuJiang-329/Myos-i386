@@ -14,6 +14,7 @@ BOOT_DIR = oskernel/boot
 INIT_DIR = oskernel/init
 KERNEL_DIR = oskernel
 DRIVERS_DIR = oskernel/kernel/drivers
+DEVICE_DIR = oskernel/kernel/device
 MM_DIR = oskernel/kernel/mm
 IDT_DIR = oskernel/kernel/idt
 BUILD_DIR = build
@@ -46,13 +47,15 @@ BITMAP_O = $(BUILD_DIR)/bitmap.o
 MEMORY_O = $(BUILD_DIR)/memory.o
 INTERRUPT_O = $(BUILD_DIR)/interrupt.o
 THREAD_O = $(BUILD_DIR)/thread.o
+SWITCH_O = $(BUILD_DIR)/switch.o
 LIST_O = $(BUILD_DIR)/list.o
+TIMER_O = $(BUILD_DIR)/timer.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
 
 # 内核对象文件集合
 OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
 		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) \
-		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O) $(LIST_O)
+		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O) $(SWITCH_O) $(LIST_O) $(TIMER_O)
 
 # 硬盘镜像（也放在 build 目录下）
 HD_IMG = $(BUILD_DIR)/hd.img
@@ -113,6 +116,10 @@ $(PIC_O): $(IDT_DIR)/pic.c
 $(INTERRUPT_O): $(IDT_DIR)/interrupt.c
 	$(GCC) $(CFLAGS) -c $< -o $@
 
+# timer.c 编译为对象文件
+$(TIMER_O): $(DEVICE_DIR)/timer.c
+	$(GCC) $(CFLAGS) -c $< -o $@
+
 # string.c 编译为对象文件
 $(STRING_O): $(LIB_DIR)/string.c
 	$(GCC) $(CFLAGS) -c $< -o $@
@@ -132,6 +139,10 @@ $(THREAD_O): $(THREAD_DIR)/thread.c
 # list.c 编译为对象文件
 $(LIST_O): $(LIB_DIR)/kernel/list.c
 	$(GCC) $(CFLAGS) -c $< -o $@
+
+# switch.S 编译为对象文件
+$(SWITCH_O): $(THREAD_DIR)/switch.S
+	$(NASM) -f elf32 $< -o $@
 
 
 # ============================================
