@@ -1,6 +1,6 @@
 #include "list.h"
 #include <stddef.h>
-#include "../../idt/pic.h"
+#include "../../idt/interrupt.h"
 
 /* 初始化双向链表list */
 void list_init (struct list* list) {
@@ -12,7 +12,7 @@ void list_init (struct list* list) {
 
 /* 把链表元素elem插入在元素before之前 */
 void list_insert_before(struct list_elem* before, struct list_elem* elem) { 
-    pic_disable_all();        //未来这个链表结点插入是用于修改task_struck队列的，这是个公共资源，所以需要不被切换走
+     enum intr_status old_status = intr_disable();        //未来这个链表结点插入是用于修改task_struck队列的，这是个公共资源，所以需要不被切换走
 
 /* 将before前驱元素的后继元素更新为elem, 暂时使before脱离链表*/ 
    before->prev->next = elem; 
@@ -25,7 +25,7 @@ void list_insert_before(struct list_elem* before, struct list_elem* elem) {
 /* 更新before的前驱结点为elem */
    before->prev = elem;
 
-   pic_enable_all();     //关中断之前是开着，那么现在就重新打开中断，如果关着，那么就继续关着
+  intr_set_status(old_status);    //关中断之前是开着，那么现在就重新打开中断，如果关着，那么就继续关着
 }
 
 /* 添加元素到列表队首,类似栈push操作，添加结点到链表队首，类似于push操作, 参数1是链表的管理结点，参数2是一个新结点 */
@@ -40,12 +40,12 @@ void list_append(struct list* plist, struct list_elem* elem) {
 
 /* 使元素pelem脱离链表 */
 void list_remove(struct list_elem* pelem) {
-    pic_disable_all();
+    enum intr_status old_status = intr_disable();
    
    pelem->prev->next = pelem->next;
    pelem->next->prev = pelem->prev;
 
-   pic_enable_all();
+   intr_set_status(old_status);
 }
 
 /* 将链表第一个元素弹出并返回,类似栈的pop操作，参数是链表的管理结点（入口结点） */

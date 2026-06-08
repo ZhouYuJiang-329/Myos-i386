@@ -16,6 +16,7 @@
 #
 
 void k_thread_a(void *arg);
+void k_thread_b(void *arg);
 void kernel_main(void) {
     // 初始化串口
     serial_init();
@@ -54,8 +55,7 @@ void kernel_main(void) {
     pic_set_mask(0, 0);  // 0 = 启用
    
 
-    // 启用所有中断
-    __asm__ __volatile__("sti");
+  
     
 
     serial_puts("Interrupts enabled!\n");
@@ -77,22 +77,44 @@ void kernel_main(void) {
     vga_puts("Hello OS! VGA OK!\n");
     vga_set_color(VGA_WHITE, VGA_BLACK);
     vga_puts("Hello OS! VGA OK!\n");
-    
+   
     serial_putline("Kernel initialization completed!");
     vga_puts("Kernel initialization completed!\n");
-    // thread_start("k_thread_a",31, k_thread_a, "thread_a ");
+
+    // 初始化线程环境（必须在创建线程之前）
+    thread_init();
+
+    // 创建两个测试线程
+    thread_start("k_thread_a", 8, k_thread_a, "theada ");
+    thread_start("k_thread_b", 31, k_thread_b, "threadb ");
+
+    // 初始化定时器（会注册定时器中断处理函数）
+    timer_init();
+
+    // 启用所有中断
+    __asm__ __volatile__("sti");
     // 无限循环，防止内核退出
-     timer_init();
+     
     while (1) {
-        __asm__ volatile("hlt");
+        serial_puts("main ");
     }
 }
 
 void k_thread_a(void *arg) {
     char *message = (char*)arg;
     while(1){
-       
-        vga_puts(message);
+        serial_puts(message);
+        // 主动让出 CPU，等待下一次调度
+        // schedule();
     }
-    
+
+}
+
+void k_thread_b(void *arg) {
+    char *message = (char*)arg;
+    while(1){
+        serial_puts(message);
+        // 主动让出 CPU，等待下一次调度
+        // schedule();
+    }
 }

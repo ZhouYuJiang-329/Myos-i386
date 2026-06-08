@@ -3,6 +3,8 @@
 #include "../drivers/serial.h"
 #include <stddef.h>
 
+#define EFLAGS_IF   0x00000200       // eflags寄存器中的if位为1
+#define GET_EFLAGS(EFLAG_VAR) asm volatile("pushfl; popl %0" : "=g" (EFLAG_VAR))
 // ============================================
 // 中断处理函数指针数组
 // ============================================
@@ -95,12 +97,8 @@ void interrupt_handler(struct interrupt_frame* frame, uint32_t interrupt_number)
     // 检查是否有自定义处理函数
     if (interrupt_number < 256 && interrupt_handlers[interrupt_number] != NULL) {
         // 调用自定义处理函数
+        // 注意：EOI 已经在 isr.asm 的 irq_common_stub 中发送
         interrupt_handlers[interrupt_number](frame);
-
-        // 对于硬件中断，需要发送 EOI
-        if (interrupt_number >= 32 && interrupt_number < 48) {
-            pic_send_eoi(interrupt_number - 32);
-        }
         return;
     }
 
@@ -170,9 +168,7 @@ void interrupt_handler(struct interrupt_frame* frame, uint32_t interrupt_number)
                           irq_names[irq], irq, interrupt_number);
         }
 
-        // 发送 EOI (End of Interrupt) 给 PIC
-        // 这是必须的，否则 PIC 不会发送下一个中断
-        pic_send_eoi(irq);
+        // 注意：EOI 已经在 isr.asm 的 irq_common_stub 中发送
 
     } else {
         // ============================================
@@ -236,4 +232,46 @@ int interrupt_pending(uint8_t irq) {
 
     // 检查对应的位
     return (irr >> irq) & 1;
+}
+
+
+/* 获取当前中断状态 */
+enum intr_status intr_get_status() {
+   uint32_t eflags = 0; 
+   GET_EFLAGS(eflags);
+   return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
+}
+
+
+/* 开中断并返回开中断前的状态*/
+enum intr_status intr_enable() {
+   enum intr_status old_status;
+   if (INTR_ON == intr_get_status()) {
+      old_status = INTR_ON;
+      return old_status;
+   } else {
+      old_status = INTR_OFF;
+      asm volatile("sti");	 // 开中断,sti指令将IF位置1
+      return old_status;
+   }
+}
+
+/* 关中断,并且返回关中断前的状态 */
+enum intr_status intr_disable() {     
+   enum intr_status old_status;
+   if (INTR_ON == intr_get_status()) {
+      old_status = INTR_ON;
+      asm volatile("cli" : : : "memory"); // 关中断,cli指令将IF位置0
+                                          //cli指令不会直接影响内存。然而，从一个更大的上下文来看，禁用中断可能会影响系统状态，
+                                          //这个状态可能会被存储在内存中。所以改变位填 "memory" 是为了安全起见，确保编译器在生成代码时考虑到这一点。
+      return old_status;
+   } else {
+      old_status = INTR_OFF;
+      return old_status;
+   }
+}
+
+/* 将中断状态设置为status */
+enum intr_status intr_set_status(enum intr_status status) {
+   return status & INTR_ON ? intr_enable() : intr_disable();   //enable与disable函数会返回旧中断状态
 }

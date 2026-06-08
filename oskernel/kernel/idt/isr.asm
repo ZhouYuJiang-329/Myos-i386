@@ -260,6 +260,12 @@ irq_common_stub:
     mov fs, ax
     mov gs, ax
 
+    ; 在调用C处理函数之前发送EOI
+    ; 这样即使C处理函数内部调用了schedule()切换线程，EOI也已经发送
+    mov al, 0x20
+    out 0xa0, al           ; 向从片发送EOI
+    out 0x20, al           ; 向主片发送EOI
+
     ; 调用 C 语言中断处理函数
     ; cdecl 调用约定：参数从右到左压栈
     push dword [esp + 44]  ; interrupt_number (右参数，先压栈)

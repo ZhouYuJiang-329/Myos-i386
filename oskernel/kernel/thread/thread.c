@@ -2,7 +2,7 @@
 #include "stdint.h"
 #include "../lib/string.h"
 #include "../mm/memory.h"
-#include "../idt/pic.h"
+#include "../idt/interrupt.h"
 #include "../global.h"
 #include "../drivers/vga.h"
 
@@ -25,7 +25,7 @@ struct task_struct* running_thread() {
 
 /* 由kernel_thread去执行function(func_arg) , 这个函数就是线程中去开启我们要运行的函数*/
 static void kernel_thread(thread_func* function, void* func_arg) {
-   pic_enable_all();
+     intr_enable();
    function(func_arg); 
 }
 
@@ -134,10 +134,10 @@ void schedule() {
 
 /* 初始化线程环境 */
 void thread_init(void) {
-   vga_puts("thread_init start\n");
+   serial_puts("thread_init start\n");
    list_init(&thread_ready_list);
    list_init(&thread_all_list);
 /* 将当前main函数创建为线程 */
    make_main_thread();
-   vga_puts("thread_init done\n");
+   serial_puts("thread_init done\n");
 }
