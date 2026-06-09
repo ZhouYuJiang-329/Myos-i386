@@ -96,17 +96,17 @@ void kernel_main(void) {
     // 无限循环，防止内核退出
      
     while (1) {
-        serial_puts("main ");
-         schedule();
+        vga_puts("main");
+        //  schedule();
     }
 }
 
 void k_thread_a(void *arg) {
     char *message = (char*)arg;
     while(1){
-        serial_puts(message);
+        vga_puts(message);
         // 主动让出 CPU，等待下一次调度
-        schedule();
+        // schedule();
     }
 
 }
@@ -114,8 +114,8 @@ void k_thread_a(void *arg) {
 void k_thread_b(void *arg) {
     char *message = (char*)arg;
     while(1){
-        serial_puts(message);
+        vga_puts(message);
         // 主动让出 CPU，等待下一次调度
-        schedule();
+        // schedule();
     }
 }
