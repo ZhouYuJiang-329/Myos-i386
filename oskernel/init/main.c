@@ -97,6 +97,7 @@ void kernel_main(void) {
      
     while (1) {
         serial_puts("main ");
+         schedule();
     }
 }
 
@@ -105,7 +106,7 @@ void k_thread_a(void *arg) {
     while(1){
         serial_puts(message);
         // 主动让出 CPU，等待下一次调度
-        // schedule();
+        schedule();
     }
 
 }
@@ -115,6 +116,6 @@ void k_thread_b(void *arg) {
     while(1){
         serial_puts(message);
         // 主动让出 CPU，等待下一次调度
-        // schedule();
+        schedule();
     }
 }
