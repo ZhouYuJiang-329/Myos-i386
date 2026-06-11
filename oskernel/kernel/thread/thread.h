@@ -93,4 +93,10 @@ struct task_struct* thread_start(char* name, int prio, thread_func function, voi
 struct task_struct* running_thread(void);
 void schedule(void);
 void thread_init(void);
+
+/**
+ * 睡眠-阻塞-唤醒
+*/
+void thread_block(enum task_status stat);
+void thread_unblock(struct task_struct* pthread);
 #endif
