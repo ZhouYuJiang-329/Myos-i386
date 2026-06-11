@@ -2,16 +2,16 @@
 // Created by ziya on 22-6-23.
 //
 
-#include "../kernel/drivers/serial.h"
-#include "../kernel/drivers/vga.h"
-#include "../kernel/mm/mem_detect.h"
-#include "../kernel/mm/paging.h"
-#include "../kernel/idt/idt.h"
-#include "../kernel/idt/pic.h"
-#include "../kernel/idt/interrupt.h"
-#include "../kernel/mm/memory.h"
-#include "../kernel/thread/thread.h"
-#include "../kernel/device/timer.h"
+#include "serial.h"
+#include "vga.h"
+#include "mem_detect.h"
+#include "paging.h"
+#include "idt.h"
+#include "pic.h"
+#include "interrupt.h"
+#include "memory.h"
+#include "thread.h"
+#include "timer.h"
 
 #
 

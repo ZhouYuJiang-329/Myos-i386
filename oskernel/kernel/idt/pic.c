@@ -1,5 +1,5 @@
 #include "pic.h"
-#include "../drivers/serial.h"
+#include "serial.h"
 
 // ============================================
 // 初始化 8259A PIC

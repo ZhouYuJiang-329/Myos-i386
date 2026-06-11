@@ -1,5 +1,5 @@
 #include "idt.h"
-#include "../drivers/serial.h"
+#include "serial.h"
 
 // ============================================
 // IDT 相关变量

@@ -1,5 +1,5 @@
 #include "mem_detect.h"
-#include "../drivers/serial.h"
+#include "serial.h"
 
 // 打印内存映射表
 void print_memory_map(void) {

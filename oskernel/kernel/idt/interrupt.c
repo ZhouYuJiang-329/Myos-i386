@@ -1,6 +1,6 @@
 #include "interrupt.h"
 #include "pic.h"
-#include "../drivers/serial.h"
+#include "serial.h"
 #include <stddef.h>
 
 #define EFLAGS_IF   0x00000200       // eflags寄存器中的if位为1

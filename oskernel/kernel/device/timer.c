@@ -1,9 +1,9 @@
 #include "timer.h" 
-#include "../drivers/io.h"
-#include "../drivers/vga.h"
-#include "../idt/interrupt.h"
-#include "../thread/thread.h"
-#include "../drivers/serial.h"
+#include "io.h"
+#include "vga.h"
+#include "interrupt.h"
+#include "thread.h"
+#include "serial.h"
 
 
 #define IRQ0_FREQUENCY	    100    //定义我们想要的中断发生频率，100HZ                         

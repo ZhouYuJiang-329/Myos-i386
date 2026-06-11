@@ -2,8 +2,8 @@
 #include "mem_detect.h"
 #include "stdint.h"
 #include <stddef.h>
-#include "../drivers/serial.h"
-#include "../lib/string.h"
+#include "serial.h"
+#include "string.h"
 
 
 struct pool kernel_pool, user_pool;      //为kernel与user分别建立物理内存池，让用户进程只能从user内存池获得新的内存空间，

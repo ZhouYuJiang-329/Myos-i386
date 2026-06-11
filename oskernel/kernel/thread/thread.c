@@ -1,10 +1,10 @@
 #include "thread.h"
 #include "stdint.h"
-#include "../lib/string.h"
-#include "../mm/memory.h"
-#include "../idt/interrupt.h"
-#include "../global.h"
-#include "../drivers/vga.h"
+#include "string.h"
+#include "memory.h"
+#include "interrupt.h"
+#include "global.h"
+#include "vga.h"
 
 #define PG_SIZE 4096
 

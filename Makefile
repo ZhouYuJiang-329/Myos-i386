@@ -7,7 +7,17 @@ BOCHS = bochs
 BXIMAGE = bximage
 
 # C 编译器标志（32位保护模式，无标准库，无栈保护）
-CFLAGS = -m32 -ffreestanding   -fno-pic -fno-stack-protector -I.
+CFLAGS = -m32 -ffreestanding -fno-pic -fno-stack-protector \
+         -I. \
+         -Ioskernel/init \
+         -Ioskernel/kernel \
+         -Ioskernel/kernel/drivers \
+         -Ioskernel/kernel/mm \
+         -Ioskernel/kernel/idt \
+         -Ioskernel/kernel/thread \
+         -Ioskernel/kernel/device \
+         -Ioskernel/kernel/lib \
+         -Ioskernel/kernel/lib/kernel
 
 # 目录
 BOOT_DIR = oskernel/boot
@@ -50,12 +60,15 @@ THREAD_O = $(BUILD_DIR)/thread.o
 SWITCH_O = $(BUILD_DIR)/switch.o
 LIST_O = $(BUILD_DIR)/list.o
 TIMER_O = $(BUILD_DIR)/timer.o
+SYNC_O = $(BUILD_DIR)/sync.o
 KERNEL_BIN = $(BUILD_DIR)/kernel.bin
+
 
 # 内核对象文件集合
 OBJS = $(HEAD_O) $(MAIN_O) $(SERIAL_O) $(VGA_O) $(MEM_DETECT_O) \
 		$(PAGING_O) $(IDT_O) $(ISR_O) $(PIC_O) $(STRING_O) \
-		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O) $(SWITCH_O) $(LIST_O) $(TIMER_O)
+		$(BITMAP_O) $(MEMORY_O) $(INTERRUPT_O) $(THREAD_O) $(SWITCH_O) \
+		$(LIST_O) $(TIMER_O) $(SYNC_O)
 
 # 硬盘镜像（也放在 build 目录下）
 HD_IMG = $(BUILD_DIR)/hd.img
@@ -143,6 +156,10 @@ $(LIST_O): $(LIB_DIR)/kernel/list.c
 # switch.S 编译为对象文件
 $(SWITCH_O): $(THREAD_DIR)/switch.S
 	$(NASM) -f elf32 $< -o $@
+
+# sync.c 编译为对象文件
+$(SYNC_O): $(THREAD_DIR)/sync.c
+	$(GCC) $(CFLAGS) -c $< -o $@
 
 
 # ============================================
